@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from crop_env import CropEnv
 from crop_env.models import Action, Observation, StepResult
 
+
 app = FastAPI(title="Crop-Outcome OpenEnv", version="1.0.0")
 
 # One shared env instance per container — the validator expects session state
