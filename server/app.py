@@ -65,6 +65,11 @@ def health() -> JSONResponse:
     return JSONResponse({"status": "ok"})
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Main entry point for the server."""
     port = int(os.environ.get("PORT", "7860"))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
+
+if __name__ == "__main__":
+    main()
