@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "crop-openenv"
-version = "0.2.0"
+version = "0.1.0"
 description = "Outcome-based crop management simulator (OpenEnv)"
 authors = [
-    { name="Thulasi" }
+    { name = "Thulasi" }
 ]
 readme = "README.md"
 requires-python = ">=3.9"
@@ -15,8 +15,13 @@ requires-python = ">=3.9"
 dependencies = [
     "pydantic",
     "numpy",
-    "openai"
+    "openai",
+    "openenv-core>=0.2.0"
 ]
+
+# ✅ THIS FIXES "missing server entry point"
+[project.scripts]
+server = "server.app:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
