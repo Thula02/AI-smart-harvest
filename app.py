@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Optional
+from typing import Any
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 
 from crop_env import CropEnv
-from crop_env.models import Action, Observation, StepResult
-from inference import call_llm,_fallback_action, MODEL_NAME
+from crop_env.models import Action
 
 app = FastAPI(title="Crop-Outcome OpenEnv", version="1.0.0")
 
@@ -20,21 +19,20 @@ _env = CropEnv(seed=int(os.environ.get("SEED", "42")))
 
 
 @app.post("/reset")
-def reset(body: Optional[dict[str, Any]]= None) -> JSONResponse:
-    """Start a new episode. Body: {"task_name": "ideal_season"}"""
-    task_name = (body or {}).get("task_name", "ideal_season")
+def reset() -> JSONResponse:
+    """Start a new episode(no request body required)."""
     try:
-        obs = _env.reset(task_name)
+        obs = _env.reset("ideal_season")
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     return JSONResponse(obs.model_dump())
 
 
 @app.post("/step")
-def step(body: Optional[dict[str, Any]]= None) -> JSONResponse:
+def step(body: dict[str, Any]) -> JSONResponse:
     """Apply one action. Body: Action fields as JSON."""
     try:
-        action = Action(**(body or {}))
+        action = Action(**body)
         result = _env.step(action)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
