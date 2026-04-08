@@ -1,28 +1,21 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
 [project]
-name = "crop-openenv"
+name = "ai-smart-harvest"
 version = "0.1.0"
-description = "Outcome-based crop management simulator (OpenEnv)"
-authors = [
-    { name = "Thulasi" }
-]
-readme = "README.md"
+description = "AI-Smart-Harvest: A crop environment with RL agents"
 requires-python = ">=3.10"
-
 dependencies = [
-    "pydantic",
-    "numpy",
-    "openai",
-    "openenv-core>=0.2.0"
+    "pydantic>=2.0",
+    "openai>=1.0",
+    "numpy>=1.24",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.29.0",
 ]
 
-# ✅ THIS FIXES "missing server entry point"
-[project.scripts]
-server = "server.app:main"
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+]
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["crop_env*"]
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
