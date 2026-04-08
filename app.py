@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 
 from crop_env import CropEnv
-from crop_env.models import Action
+from crop_env.models import Action, Observation, StepResult
+from fastapi.responses import call_llm,_fallback_action, MODEL_NAME
 
 app = FastAPI(title="Crop-Outcome OpenEnv", version="1.0.0")
 
