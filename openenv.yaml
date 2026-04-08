@@ -1,0 +1,24 @@
+tasks:
+  - name: ideal_season
+    description: "Easy: Optimize crop growth and quality in favorable conditions over 60 days"
+    difficulty: easy
+  - name: variable_weather
+    description: "Medium: Balance all 8 crop metrics under variable weather with rising pests over 90 days"
+    difficulty: medium
+  - name: drought_year
+    description: "Hard: Maximize crop outcomes under drought with limited water budget over 90 days"
+    difficulty: hard
+
+environment:
+  name: crop-outcome
+  description: >
+    Outcome-based crop management simulator where rewards are driven by
+    measured field/crop metric changes (crop health, growth rate, soil health,
+    water stress, nutrient stress, pest pressure, crop quality, environmental
+    score) weighted by the farming scenario. Each scenario has hidden soil,
+    weather, and pest dynamics the agent must learn through experience.
+    Key features: delayed fertilizer effects (2-10 days), pest resistance
+    buildup, weather stochasticity, and crop growth stages with varying
+    sensitivity.
+
+entrypoint: python inference.py
