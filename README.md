@@ -1,3 +1,10 @@
+---
+title: AI smart harvest
+sdk: docker
+emoji: 🌍
+colorFrom: green
+colorTo: blue
+---
 # Crop Management OpenEnv — Outcome-Based Simulator
 
 An OpenEnv-compliant crop management simulator where rewards are driven by
