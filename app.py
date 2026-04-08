@@ -19,20 +19,21 @@ _env = CropEnv(seed=int(os.environ.get("SEED", "42")))
 
 
 @app.post("/reset")
-def reset() -> JSONResponse:
-    """Start a new episode(no request body required)."""
+def reset(body: Optional[dict[str,Any]]=None) -> JSONResponse:
+    """Start a new episode. Body:{"task_name":"ideal_season"}"""
+    task_name= (body or {}).get("task_name","ideal_season")
     try:
-        obs = _env.reset("ideal_season")
+        obs = _env.reset(task_name)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     return JSONResponse(obs.model_dump())
 
 
 @app.post("/step")
-def step(body: dict[str, Any]) -> JSONResponse:
+def step(body: Optional[dict[str, Any]]= None) -> JSONResponse:
     """Apply one action. Body: Action fields as JSON."""
     try:
-        action = Action(**body)
+        action = Action(**(body or {}))
         result = _env.step(action)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
