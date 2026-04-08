@@ -65,7 +65,16 @@ def grade() -> JSONResponse:
 def health() -> JSONResponse:
     return JSONResponse({"status": "ok"})
 
+# your API code...
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "7860"))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
+def main():
+    import os
+    import uvicorn
+
+    port = int(os.environ.get("PORT", "7860"))
+    uvicorn.run("server.app:app", host="0.0.0.0", port=port)
+
