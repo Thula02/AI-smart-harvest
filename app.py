@@ -17,6 +17,18 @@ app = FastAPI(title="Crop-Outcome OpenEnv", version="1.0.0")
 
 # One shared env instance per container — the validator expects session state
 _env = CropEnv(seed=int(os.environ.get("SEED", "42")))
+@app.get("/")
+def root():
+    return {
+        "message": "Crop-Outcome OpenEnv API is running",
+        "endpoints": [
+            "/reset (POST)",
+            "/step (POST)",
+            "/state (GET)",
+            "/grade (GET)",
+            "/health (GET)"
+        ]
+    }
 
 
 @app.post("/reset")
