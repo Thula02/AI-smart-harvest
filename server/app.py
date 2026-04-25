@@ -70,6 +70,12 @@ def health() -> JSONResponse:
     return JSONResponse({"status": "ok"})
 
 
+@app.get("/favicon.ico")
+def favicon():
+    """Return a simple favicon to suppress 404 errors."""
+    return JSONResponse({"status": "ok"})
+
+
 def main() -> None:
     """Main entry point for the server."""
     port = int(os.environ.get("PORT", "7860"))
