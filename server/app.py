@@ -17,6 +17,11 @@ app = FastAPI(title="Crop-Outcome OpenEnv", version="1.0.0")
 # One shared env instance per container — the validator expects session state
 _env = CropEnv(seed=int(os.environ.get("SEED", "42")))
 
+app = FastAPI()
+@app.get("/")
+def root():
+    return {"message": "Crop Env API running 🚀"}
+
 
 @app.post("/reset")
 def reset(body: Optional[dict[str,Any]]=None) -> JSONResponse:
