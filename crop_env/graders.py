@@ -161,3 +161,72 @@ def grade_drought_year(history: list[dict[str, Any]]) -> float:
         + 0.15 * breadth
     )
     return round(max(0.0, min(1.0, score)), 4)
+
+
+# ---------------------------------------------------------------------------
+# Task 4: Supply Chain Disruption
+# ---------------------------------------------------------------------------
+
+def grade_supply_chain_disruption(history: list[dict[str, Any]]) -> float:
+    """Supply chain task: keep outcomes stable under input constraints.
+
+    Emphasizes: avg reward, nutrient stress improvement, breadth, and budget discipline.
+    """
+    if not history:
+        return 0.0
+
+    rewards = [h.get("reward_total", 0.0) for h in history]
+    avg_reward = sum(rewards) / len(rewards)
+    breadth = _metric_breadth(history)
+
+    # Nutrient stress improvement (lower is better)
+    ns_first = history[0].get("metrics", {}).get("nutrient_stress", 50)
+    ns_last = history[-1].get("metrics", {}).get("nutrient_stress", 50)
+    ns_improvement = (ns_first - ns_last)  # positive is good
+
+    # Budget discipline (if present)
+    bud = (history[-1].get("budget") or {})
+    total = bud.get("total_usd", None)
+    spent = bud.get("spent_usd", 0.0)
+    if total in (None, 0):
+        budget_score = 0.5
+    else:
+        budget_score = 1.0 - _normalize(float(spent) / float(total), 0.0, 1.0)
+
+    score = (
+        0.40 * _normalize(avg_reward, 20, 60)
+        + 0.20 * _normalize(ns_improvement, 0, 20)
+        + 0.25 * breadth
+        + 0.15 * budget_score
+    )
+    return round(max(0.0, min(1.0, score)), 4)
+
+
+# ---------------------------------------------------------------------------
+# Task 5: Regulatory Shift
+# ---------------------------------------------------------------------------
+
+def grade_regulatory_shift(history: list[dict[str, Any]]) -> float:
+    """Regulatory task: maintain pest control while improving environmental score."""
+    if not history:
+        return 0.0
+
+    rewards = [h.get("reward_total", 0.0) for h in history]
+    avg_reward = sum(rewards) / len(rewards)
+    breadth = _metric_breadth(history)
+
+    env_first = history[0].get("metrics", {}).get("environmental_score", 70)
+    env_last = history[-1].get("metrics", {}).get("environmental_score", 70)
+    env_improvement = (env_last - env_first)
+
+    pp_first = history[0].get("metrics", {}).get("pest_pressure", 30)
+    pp_last = history[-1].get("metrics", {}).get("pest_pressure", 30)
+    pest_improvement = (pp_first - pp_last)  # positive is good
+
+    score = (
+        0.35 * _normalize(avg_reward, 20, 60)
+        + 0.25 * _normalize(env_improvement, 0, 20)
+        + 0.25 * _normalize(pest_improvement, 0, 20)
+        + 0.15 * breadth
+    )
+    return round(max(0.0, min(1.0, score)), 4)

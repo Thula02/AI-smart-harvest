@@ -1,7 +1,7 @@
 """Pydantic models for the Outcome-Based Crop Management Simulator."""
 
 from enum import Enum
-from typing import Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -41,6 +41,12 @@ class GrowthStage(str, Enum):
     MATURITY = "maturity"
 
 
+class ToolCallType(str, Enum):
+    SOIL_TEST = "soil_test"
+    WEATHER_FORECAST = "weather_forecast"
+    MARKET_PRICES = "market_prices"
+
+
 # ---------------------------------------------------------------------------
 # Irrigation water amounts (mm per application)
 # ---------------------------------------------------------------------------
@@ -61,6 +67,42 @@ class Action(BaseModel):
     irrigation: IrrigationLevel = Field(description="Irrigation level for today")
     fertilizer: FertilizerType = Field(description="Fertilizer type for today")
     pest_management: PestManagement = Field(description="Pest management action for today")
+
+
+# ---------------------------------------------------------------------------
+# Tools + Budget (Round 2 — Phase 1)
+# ---------------------------------------------------------------------------
+
+
+class ToolAction(BaseModel):
+    action_type: Literal["tool"] = Field(
+        default="tool", description="Discriminator for tool calls"
+    )
+    tool: ToolCallType = Field(description="Which tool to call")
+
+
+class ToolResult(BaseModel):
+    tool: ToolCallType = Field(description="Tool that produced this result")
+    day_requested: int = Field(ge=0, description="Day the tool was requested")
+    day_available: int = Field(
+        ge=0, description="Day the tool result becomes visible in Observation"
+    )
+    cost_usd: float = Field(
+        ge=0, description="USD cost charged to budget for this tool call"
+    )
+    data: dict[str, Any] = Field(
+        default_factory=dict, description="Tool payload (schema depends on tool)"
+    )
+
+
+class BudgetState(BaseModel):
+    total_usd: Optional[float] = Field(
+        default=None, description="Total budget (null = unlimited)"
+    )
+    spent_usd: float = Field(default=0.0, ge=0, description="Amount spent so far")
+    remaining_usd: Optional[float] = Field(
+        default=None, description="Remaining budget (null = unlimited)"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -134,6 +176,13 @@ class Observation(BaseModel):
     scenario_name: str = Field(description="Name of the current scenario")
     soil_moisture: float = Field(ge=0, le=100, description="Current soil moisture %")
     water_used_total: float = Field(ge=0, description="Cumulative irrigation water used (mm)")
+    budget: BudgetState = Field(
+        default_factory=BudgetState, description="Budget totals/spend/remaining"
+    )
+    tool_result: Optional[ToolResult] = Field(
+        default=None,
+        description="Most recent tool output (appears the step AFTER the call)",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -149,6 +198,23 @@ class RewardBreakdown(BaseModel):
     pest_pressure_reward: float = Field(description="Reward from pest pressure change")
     crop_quality_reward: float = Field(description="Reward from crop quality change")
     environmental_score_reward: float = Field(description="Reward from environmental score change")
+    agronomy_total: float = Field(
+        default=50.0,
+        description="Agronomy-only reward component before economic blending (0-100)",
+    )
+    economic_total: float = Field(
+        default=50.0,
+        description="Economic reward component (0-100); defaults to neutral baseline when not provided",
+    )
+    profit_usd: Optional[float] = Field(
+        default=None, description="Per-step profit estimate (revenue - costs), if computed"
+    )
+    revenue_usd: Optional[float] = Field(
+        default=None, description="Per-step revenue estimate (typically only at harvest), if computed"
+    )
+    cost_usd: Optional[float] = Field(
+        default=None, description="Per-step action/tool cost in USD, if computed"
+    )
     total: float = Field(description="Task-weighted total reward (0-100)")
 
 

@@ -52,6 +52,26 @@ TASK_WEIGHTS: dict[str, dict[str, float]] = {
         "crop_quality": 0.05,
         "environmental_score": 0.10,
     },
+    "supply_chain_disruption": {
+        "crop_health": 0.15,
+        "growth_rate": 0.15,
+        "soil_health": 0.10,
+        "water_stress": 0.10,
+        "nutrient_stress": 0.20,
+        "pest_pressure": 0.10,
+        "crop_quality": 0.15,
+        "environmental_score": 0.05,
+    },
+    "regulatory_shift": {
+        "crop_health": 0.10,
+        "growth_rate": 0.10,
+        "soil_health": 0.15,
+        "water_stress": 0.10,
+        "nutrient_stress": 0.10,
+        "pest_pressure": 0.10,
+        "crop_quality": 0.10,
+        "environmental_score": 0.25,
+    },
 }
 
 # ---------------------------------------------------------------------------
@@ -117,6 +137,12 @@ def compute_reward(
     deltas: CropMetricDeltas,
     task_name: str,
     current_metrics: Optional[CropMetrics] = None,
+    *,
+    economic_reward: Optional[float] = None,
+    economic_weight: float = 0.5,
+    profit_usd: Optional[float] = None,
+    revenue_usd: Optional[float] = None,
+    cost_usd: Optional[float] = None,
 ) -> RewardBreakdown:
     """Compute blended reward from metric deltas and absolute state quality.
 
@@ -162,8 +188,16 @@ def compute_reward(
         state_quality = 0.5  # Neutral default preserves baseline = 50
     state_score = state_quality * 100.0
 
-    # Blend delta and state components
-    total = delta_score * _DELTA_WEIGHT + state_score * _STATE_WEIGHT
+    # Agronomy-only total
+    agronomy_total = delta_score * _DELTA_WEIGHT + state_score * _STATE_WEIGHT
+    agronomy_total = max(0.0, min(100.0, agronomy_total))
+
+    # Economic component (optional). When not provided, stay neutral at 50.
+    econ = 50.0 if economic_reward is None else float(economic_reward)
+    econ = max(0.0, min(100.0, econ))
+
+    economic_weight = max(0.0, min(1.0, float(economic_weight)))
+    total = agronomy_total * (1.0 - economic_weight) + econ * economic_weight
     total = max(0.0, min(100.0, total))
 
     return RewardBreakdown(
@@ -175,6 +209,11 @@ def compute_reward(
         pest_pressure_reward=per_metric["pest_pressure"],
         crop_quality_reward=per_metric["crop_quality"],
         environmental_score_reward=per_metric["environmental_score"],
+        agronomy_total=round(agronomy_total, 2),
+        economic_total=round(econ, 2),
+        profit_usd=None if profit_usd is None else round(float(profit_usd), 2),
+        revenue_usd=None if revenue_usd is None else round(float(revenue_usd), 2),
+        cost_usd=None if cost_usd is None else round(float(cost_usd), 2),
         total=round(total, 2),
     )
 

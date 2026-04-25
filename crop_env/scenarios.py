@@ -72,6 +72,7 @@ class ScenarioConfig:
     starting_soil_moisture: float
     total_days: int
     water_budget: float  # Total mm of irrigation allowed (inf = no limit)
+    budget: float | None  # USD budget (None = unlimited)
     description: str
 
 
@@ -223,6 +224,7 @@ SCENARIOS: dict[str, ScenarioConfig] = {
         starting_soil_moisture=55.0,
         total_days=60,
         water_budget=float("inf"),
+        budget=10_000.0,
         description="Easy: Fertile soil, regular rainfall, low pest risk over 60 days",
     ),
     "variable_weather": ScenarioConfig(
@@ -256,6 +258,7 @@ SCENARIOS: dict[str, ScenarioConfig] = {
         starting_soil_moisture=45.0,
         total_days=90,
         water_budget=float("inf"),
+        budget=10_000.0,
         description="Medium: Variable weather with alternating wet/dry spells and rising pest pressure",
     ),
     "drought_year": ScenarioConfig(
@@ -289,6 +292,75 @@ SCENARIOS: dict[str, ScenarioConfig] = {
         starting_soil_moisture=30.0,
         total_days=90,
         water_budget=800.0,  # Limited water budget (mm total)
+        budget=10_000.0,
         description="Hard: Drought conditions, depleted soil, high pest risk, limited water budget",
+    ),
+    "supply_chain_disruption": ScenarioConfig(
+        name="supply_chain_disruption",
+        field_model=FieldModel(
+            moisture_retention=0.62,
+            nutrient_absorption_rate=0.45,
+            organic_decomposition_rate=0.30,
+            waterlogging_threshold=82.0,
+            nutrient_burn_threshold=75.0,
+            crop_water_sensitivity=1.0,
+            crop_nutrient_sensitivity=1.1,
+            base_growth_rate=3.0,
+            pest_growth_rate=2.2,
+            pest_chemical_resistance=0.12,
+            resistance_buildup_rate=0.02,
+            rain_probability=0.28,
+            rain_intensity_mean=11.0,
+            temperature_mean=26.0,
+        ),
+        starting_metrics=CropMetrics(
+            crop_health=58,
+            growth_rate=1.4,
+            soil_health=58,
+            water_stress=28,
+            nutrient_stress=40,
+            pest_pressure=22,
+            crop_quality=54,
+            environmental_score=74,
+        ),
+        starting_soil_moisture=44.0,
+        total_days=90,
+        water_budget=float("inf"),
+        budget=10_000.0,
+        description="Medium-Hard: Fertilizer supply disruptions (balanced fertilizer unavailable days 30–60)",
+    ),
+    "regulatory_shift": ScenarioConfig(
+        name="regulatory_shift",
+        field_model=FieldModel(
+            moisture_retention=0.68,
+            nutrient_absorption_rate=0.50,
+            organic_decomposition_rate=0.32,
+            waterlogging_threshold=85.0,
+            nutrient_burn_threshold=78.0,
+            crop_water_sensitivity=0.95,
+            crop_nutrient_sensitivity=1.05,
+            base_growth_rate=3.1,
+            pest_growth_rate=2.6,
+            pest_chemical_resistance=0.10,
+            resistance_buildup_rate=0.02,
+            rain_probability=0.30,
+            rain_intensity_mean=10.0,
+            temperature_mean=25.0,
+        ),
+        starting_metrics=CropMetrics(
+            crop_health=60,
+            growth_rate=1.5,
+            soil_health=62,
+            water_stress=25,
+            nutrient_stress=30,
+            pest_pressure=28,
+            crop_quality=56,
+            environmental_score=78,
+        ),
+        starting_soil_moisture=48.0,
+        total_days=90,
+        water_budget=float("inf"),
+        budget=10_000.0,
+        description="Medium-Hard: Chemical pesticides banned after day 30 (must use scouting/biological)",
     ),
 }
