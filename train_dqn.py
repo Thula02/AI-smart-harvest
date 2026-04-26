@@ -7,6 +7,7 @@ import numpy as np
 from collections import deque
 from typing import Optional
 from pathlib import Path
+import requests
 
 from crop_env import CropEnv
 from crop_env.models import Action, IrrigationLevel, FertilizerType, PestManagement
@@ -38,6 +39,39 @@ def discrete_to_action(action_idx: int) -> Action:
         fertilizer=FERTILIZER_TYPES[fert_idx],
         pest_management=PEST_MANAGEMENT[pest_idx]
     )
+
+
+def safe_step(env: CropEnv, action: Action, max_retries: int = 3) -> tuple:
+    """Safely step the environment, converting invalid actions to valid ones."""
+    for attempt in range(max_retries):
+        try:
+            result = env.step(action)
+            return result, True
+        except RuntimeError as e:
+            # Action violated constraints, try fallback actions
+            error_msg = str(e).lower()
+            
+            if "fertilizer" in error_msg:
+                # Fallback to "none" fertilizer
+                action.fertilizer = FertilizerType.NONE
+            elif "pesticide" in error_msg or "chemical" in error_msg:
+                # Fallback to "none" pest management
+                action.pest_management = PestManagement.NONE
+            elif "irrigation" in error_msg:
+                # Fallback to "none" irrigation
+                action.irrigation = IrrigationLevel.NONE
+            else:
+                # Unknown constraint, use all "none"
+                action.irrigation = IrrigationLevel.NONE
+                action.fertilizer = FertilizerType.NONE
+                action.pest_management = PestManagement.NONE
+            
+            if attempt == max_retries - 1:
+                # Last retry failed, return with penalty
+                result = env.step(action)  # This might still fail, let it propagate
+                return result, False
+    
+    return None, False
 
 
 def observation_to_tensor(obs) -> torch.Tensor:
@@ -283,9 +317,12 @@ def train_dqn(
             action_idx = trainer.select_action(state, training=True)
             action = discrete_to_action(action_idx)
             
-            result = env.step(action)
+            result, action_valid = safe_step(env, action)
             next_obs = result.observation
             reward = result.reward.total  # Extract scalar reward from RewardBreakdown
+            # Penalize invalid actions slightly
+            if not action_valid:
+                reward *= 0.9
             done = result.done
             
             next_state = observation_to_tensor(next_obs)
@@ -354,7 +391,7 @@ def evaluate_dqn(
             action_idx = trainer.select_action(state, training=False)
             action = discrete_to_action(action_idx)
             
-            result = env.step(action)
+            result, action_valid = safe_step(env, action)
             next_obs = result.observation
             reward = result.reward.total  # Extract scalar reward from RewardBreakdown
             done = result.done
@@ -389,3 +426,16 @@ if __name__ == "__main__":
     # Evaluate
     print("\nEvaluating trained model...")
     evaluate_dqn(env, trainer, num_episodes=5, task_name="ideal_season")
+    
+    # Run agent
+    API_URL = "http://localhost:7860"
+
+    response = requests.post(
+        f"{API_URL}/agent/run",
+        json={
+            "model_path": "models/dqn_model.pth",
+            "task_name": "ideal_season",
+            "num_episodes": 5,
+        },
+    )
+    print(response.json())
